@@ -10,8 +10,7 @@ using RealTimeGraphX.EventArguments;
 using RealTimeGraphX.Renderers;
 using System.Diagnostics;
 
-namespace RealTimeGraphX
-{
+namespace RealTimeGraphX {
     /// <summary>
     /// Represents an <see cref="IGraphController{TDataSeries, TXDataPoint, TYDataPoint}"/> base class.
     /// </summary>
@@ -23,8 +22,7 @@ namespace RealTimeGraphX
     public abstract class GraphController<TDataSeries, TXDataPoint, TYDataPoint> : GraphObject, IGraphController<TDataSeries, TXDataPoint, TYDataPoint>
         where TXDataPoint : GraphDataPoint
         where TYDataPoint : GraphDataPoint
-        where TDataSeries : IGraphDataSeries
-    {
+        where TDataSeries : IGraphDataSeries {
         private GraphDataQueue<List<PendingSeries>> _pending_series_collection;
         private Dictionary<TDataSeries, PendingSeries> _to_render;
         private DateTime _last_render_time;
@@ -34,14 +32,12 @@ namespace RealTimeGraphX
 
         #region Pending Series Class
 
-        protected class PendingSeries
-        {
+        protected class PendingSeries {
             public TDataSeries Series { get; set; }
             public List<GraphDataPoint> XX { get; set; }
             public List<GraphDataPoint> YY { get; set; }
 
-            public int NewItemsCount
-            {
+            public int NewItemsCount {
                 get { return XX.Count - RenderedItems; }
             }
 
@@ -95,14 +91,11 @@ namespace RealTimeGraphX
         /// <summary>
         /// Gets or sets the graph renderer.
         /// </summary>
-        public IGraphRenderer<TDataSeries> Renderer
-        {
-            get
-            {
+        public IGraphRenderer<TDataSeries> Renderer {
+            get {
                 return _renderer;
             }
-            set
-            {
+            set {
                 _renderer = value; RaisePropertyChangedAuto();
             }
         }
@@ -111,11 +104,9 @@ namespace RealTimeGraphX
         /// <summary>
         /// Gets or sets the rendering surface.
         /// </summary>
-        public IGraphSurface<TDataSeries> Surface
-        {
+        public IGraphSurface<TDataSeries> Surface {
             get { return _surface; }
-            set
-            {
+            set {
                 var previous = _surface;
                 _surface = value;
                 RequestVirtualRangeChange();
@@ -127,14 +118,11 @@ namespace RealTimeGraphX
         /// <summary>
         /// Gets or sets the graph range (data point boundaries).
         /// </summary>
-        public GraphRange<TXDataPoint, TYDataPoint> Range
-        {
-            get
-            {
+        public GraphRange<TXDataPoint, TYDataPoint> Range {
+            get {
                 return _range;
             }
-            set
-            {
+            set {
                 _range = value; RaisePropertyChangedAuto();
             }
         }
@@ -195,8 +183,7 @@ namespace RealTimeGraphX
         /// <summary>
         /// Initializes a new instance of the <see cref="GraphController{TDataSeries, TXDataPoint, TYDataPoint}"/> class.
         /// </summary>
-        public GraphController()
-        {
+        public GraphController() {
             Renderer = new ScrollingLineRenderer<TDataSeries>();
 
             DataSeriesCollection = new ObservableCollection<TDataSeries>();
@@ -222,27 +209,21 @@ namespace RealTimeGraphX
         /// <summary>
         /// The rendering thread method.
         /// </summary>
-        private void RenderThreadMethod()
-        {
-            while (true)
-            {
-                if ((!IsPaused && !DisableRendering) || _clear)
-                {
-                    try
-                    {
+        private void RenderThreadMethod() {
+            while (true) {
+                if ((!IsPaused && !DisableRendering) || _clear) {
+                    try {
                         List<List<PendingSeries>> pending_lists = new List<List<PendingSeries>>();
 
                         var pending_list_first = _pending_series_collection.BlockDequeue();
 
-                        if (_clear)
-                        {
+                        if (_clear) {
                             _clear = false;
                             _to_render.Clear();
                             Surface?.BeginDraw();
                             Surface?.EndDraw();
 
-                            while (_pending_series_collection.Count > 0)
-                            {
+                            while (_pending_series_collection.Count > 0) {
                                 _pending_series_collection.BlockDequeue();
                             }
                             continue;
@@ -250,91 +231,66 @@ namespace RealTimeGraphX
 
                         pending_lists.Add(pending_list_first);
 
-                        while (_pending_series_collection.Count > 0)
-                        {
+                        while (_pending_series_collection.Count > 0) {
                             var pending_list = _pending_series_collection.BlockDequeue();
                             pending_lists.Add(pending_list);
                         }
 
-                        foreach (var pending_list in pending_lists)
-                        {
-                            foreach (var pending_series in pending_list)
-                            {
-                                if (!pending_series.IsUpdateSeries)
-                                {
-                                    if (_to_render.ContainsKey(pending_series.Series))
-                                    {
+                        foreach (var pending_list in pending_lists) {
+                            foreach (var pending_series in pending_list) {
+                                if (!pending_series.IsUpdateSeries) {
+                                    if (_to_render.ContainsKey(pending_series.Series)) {
                                         var s = _to_render[pending_series.Series];
                                         s.XX.AddRange(pending_series.XX);
                                         s.YY.AddRange(pending_series.YY);
-                                    }
-                                    else
-                                    {
+                                    } else {
                                         _to_render[pending_series.Series] = pending_series;
                                     }
                                 }
                             }
                         }
 
-                        if (Surface != null)
-                        {
+                        if (Surface != null) {
                             Render();
                         }
-                    }
-                    catch (Exception ex)
-                    {
+                    } catch (Exception ex) {
                         Debug.WriteLine($"Error in RealTimeGraphX:\n{ex.ToString()}");
                     }
-                }
-                else if (IsPaused && !DisableRendering)
-                {
-                    if (Surface != null)
-                    {
+                } else if (IsPaused && !DisableRendering) {
+                    if (Surface != null) {
                         Render();
                     }
                     Thread.Sleep(RefreshRate);
-                }
-                else
-                {
+                } else {
                     Thread.Sleep(RefreshRate);
                 }
             }
         }
 
-        private void Render()
-        {
-            if (_to_render.Count > 0)
-            {
+        private void Render() {
+            if (_to_render.Count > 0) {
                 GraphDataPoint min_x = _range.MaximumX - _range.MaximumX;
                 GraphDataPoint max_x = _range.MaximumX;
                 GraphDataPoint min_y = _range.MinimumY;
                 GraphDataPoint max_y = _range.MaximumY;
 
-                if (_to_render.Count > 0 && _to_render.First().Value.XX.Count > 0)
-                {
+                if (_to_render.Count > 0 && _to_render.First().Value.XX.Count > 0) {
                     min_x = _to_render.First().Value.XX.First();
                     max_x = _to_render.First().Value.XX.Last();
-                }
-                else
-                {
+                } else {
                     return;
                 }
 
-                if (_range.AutoY)
-                {
-                    min_y = _to_render.Select(x => x.Value).SelectMany(x => x.YY).Min();
-                    max_y = _to_render.Select(x => x.Value).SelectMany(x => x.YY).Max();
+                if (_range.AutoY) {
+                    min_y = _to_render.Where(x => x.Key.IsVisible).Select(x => x.Value).SelectMany(x => x.YY).Min();
+                    max_y = _to_render.Where(x => x.Key.IsVisible).Select(x => x.Value).SelectMany(x => x.YY).Max();
                 }
 
-                if (min_y == max_y)
-                {
-                    if (_range.AutoYFallbackMode == GraphRangeAutoYFallBackMode.MinMax)
-                    {
+                if (min_y == max_y) {
+                    if (_range.AutoYFallbackMode == GraphRangeAutoYFallBackMode.MinMax) {
                         min_y = _range.MinimumY;
                         max_y = _range.MaximumY;
-                    }
-                    else if (_range.AutoYFallbackMode == GraphRangeAutoYFallBackMode.Margins)
-                    {
+                    } else if (_range.AutoYFallbackMode == GraphRangeAutoYFallBackMode.Margins) {
                         min_y -= _range.AutoYFallbackMargins;
                         max_y += _range.AutoYFallbackMargins;
                     }
@@ -352,17 +308,14 @@ namespace RealTimeGraphX
 
                 _last_render_time = DateTime.Now;
 
-                if (Surface != null)
-                {
+                if (Surface != null) {
                     var surface_size = Surface.GetSize();
                     var zoom_rect = Surface.GetZoomRect();
 
-                    if (surface_size.Width > 0 && surface_size.Height > 0)
-                    {
+                    if (surface_size.Width > 0 && surface_size.Height > 0) {
                         Surface.BeginDraw();
 
-                        if (zoom_rect.Width > 0 && zoom_rect.Height > 0)
-                        {
+                        if (zoom_rect.Width > 0 && zoom_rect.Height > 0) {
                             var zoom_rect_top_percentage = zoom_rect.Top / surface_size.Height;
                             var zoom_rect_bottom_percentage = zoom_rect.Bottom / surface_size.Height;
                             var zoom_rect_left_percentage = zoom_rect.Left / surface_size.Width;
@@ -393,10 +346,8 @@ namespace RealTimeGraphX
 
                         var to_render = _to_render.Select(x => x.Value).ToList();
 
-                        foreach (var item in to_render)
-                        {
-                            if (item.YY.Count > 0)
-                            {
+                        foreach (var item in to_render) {
+                            if (item.YY.Count > 0) {
                                 item.Series.CurrentValue = item.YY.Last().GetValue();
                             }
 
@@ -404,12 +355,9 @@ namespace RealTimeGraphX
                             to_draw.Add(new Tuple<TDataSeries, IEnumerable<PointF>>(item.Series, points));
                         }
 
-                        for (int i = 0; i < to_draw.Count; i++)
-                        {
-                            if (to_draw[i].Item2.Count() > 2)
-                            {
-                                if (to_draw[i].Item1.IsVisible)
-                                {
+                        for (int i = 0; i < to_draw.Count; i++) {
+                            if (to_draw[i].Item2.Count() > 2) {
+                                if (to_draw[i].Item1.IsVisible) {
                                     Renderer.Draw(Surface, to_draw[i].Item1, to_draw[i].Item2, i, to_draw.Count);
                                 }
                             }
@@ -433,16 +381,13 @@ namespace RealTimeGraphX
         /// </summary>
         /// <param name="previous">The previous.</param>
         /// <param name="surface">The surface.</param>
-        protected virtual void OnSurfaceChanged(IGraphSurface<TDataSeries> previous, IGraphSurface<TDataSeries> surface)
-        {
-            if (previous != null)
-            {
+        protected virtual void OnSurfaceChanged(IGraphSurface<TDataSeries> previous, IGraphSurface<TDataSeries> surface) {
+            if (previous != null) {
                 previous.SurfaceSizeChanged -= Surface_SurfaceSizeChanged;
                 previous.ZoomRectChanged -= Surface_ZoomRectChanged;
             }
 
-            if (surface != null)
-            {
+            if (surface != null) {
                 surface.SurfaceSizeChanged += Surface_SurfaceSizeChanged;
                 surface.ZoomRectChanged += Surface_ZoomRectChanged;
             }
@@ -455,8 +400,7 @@ namespace RealTimeGraphX
         /// <param name="maximumX">The maximum x.</param>
         /// <param name="minimumY">The minimum y.</param>
         /// <param name="maximumY">The maximum y.</param>
-        protected virtual void OnEffectiveRangeChanged(GraphDataPoint minimumX, GraphDataPoint maximumX, GraphDataPoint minimumY, GraphDataPoint maximumY)
-        {
+        protected virtual void OnEffectiveRangeChanged(GraphDataPoint minimumX, GraphDataPoint maximumX, GraphDataPoint minimumY, GraphDataPoint maximumY) {
             EffectiveRangeChanged?.Invoke(this, new RangeChangedEventArgs(minimumX, maximumX, minimumY, maximumY));
         }
 
@@ -467,8 +411,7 @@ namespace RealTimeGraphX
         /// <param name="maximumX">The maximum x.</param>
         /// <param name="minimumY">The minimum y.</param>
         /// <param name="maximumY">The maximum y.</param>
-        protected virtual void OnVirtualRangeChanged(GraphDataPoint minimumX, GraphDataPoint maximumX, GraphDataPoint minimumY, GraphDataPoint maximumY)
-        {
+        protected virtual void OnVirtualRangeChanged(GraphDataPoint minimumX, GraphDataPoint maximumX, GraphDataPoint minimumY, GraphDataPoint maximumY) {
             var range = new RangeChangedEventArgs(minimumX, maximumX, minimumY, maximumY);
             VirtualRangeChanged?.Invoke(this, range);
         }
@@ -478,8 +421,7 @@ namespace RealTimeGraphX
         /// </summary>
         /// <param name="x">The relative x position.</param>
         /// <returns></returns>
-        protected virtual float ConvertXValueToRendererValue(double x)
-        {
+        protected virtual float ConvertXValueToRendererValue(double x) {
             return (float)(x * Surface.GetSize().Width / 100);
         }
 
@@ -488,8 +430,7 @@ namespace RealTimeGraphX
         /// </summary>
         /// <param name="y">The relative y position.</param>
         /// <returns></returns>
-        protected virtual float ConvertYValueToRendererValue(double y)
-        {
+        protected virtual float ConvertYValueToRendererValue(double y) {
             return (float)(Surface.GetSize().Height - (y * Surface.GetSize().Height / 100));
         }
 
@@ -502,16 +443,12 @@ namespace RealTimeGraphX
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void Surface_ZoomRectChanged(object sender, EventArgs e)
-        {
-            if (!_pending_series_collection.ToList().SelectMany(x => x).ToList().Exists(x => x.IsUpdateSeries))
-            {
+        private void Surface_ZoomRectChanged(object sender, EventArgs e) {
+            if (!_pending_series_collection.ToList().SelectMany(x => x).ToList().Exists(x => x.IsUpdateSeries)) {
                 List<PendingSeries> updateSeries = new List<PendingSeries>();
 
-                foreach (var pending_Series in _to_render)
-                {
-                    updateSeries.Add(new PendingSeries()
-                    {
+                foreach (var pending_Series in _to_render) {
+                    updateSeries.Add(new PendingSeries() {
                         IsUpdateSeries = true,
                         Series = pending_Series.Value.Series,
                         XX = new List<GraphDataPoint>(),
@@ -528,16 +465,12 @@ namespace RealTimeGraphX
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void Surface_SurfaceSizeChanged(object sender, EventArgs e)
-        {
-            if (!_pending_series_collection.ToList().SelectMany(x => x).ToList().Exists(x => x.IsUpdateSeries))
-            {
+        private void Surface_SurfaceSizeChanged(object sender, EventArgs e) {
+            if (!_pending_series_collection.ToList().SelectMany(x => x).ToList().Exists(x => x.IsUpdateSeries)) {
                 List<PendingSeries> updateSeries = new List<PendingSeries>();
 
-                foreach (var pending_Series in _to_render)
-                {
-                    updateSeries.Add(new PendingSeries()
-                    {
+                foreach (var pending_Series in _to_render) {
+                    updateSeries.Add(new PendingSeries() {
                         IsUpdateSeries = true,
                         Series = pending_Series.Value.Series,
                         XX = new List<GraphDataPoint>(),
@@ -559,15 +492,13 @@ namespace RealTimeGraphX
         /// </summary>
         /// <param name="x">X data point.</param>
         /// <param name="y">Y data point.</param>
-        public void PushData(TXDataPoint x, TYDataPoint y)
-        {
+        public void PushData(TXDataPoint x, TYDataPoint y) {
             if (DataSeriesCollection.Count == 0) return;
 
             List<List<TXDataPoint>> xxxx = new List<List<TXDataPoint>>();
             List<List<TYDataPoint>> yyyy = new List<List<TYDataPoint>>();
 
-            foreach (var series in DataSeriesCollection.ToList())
-            {
+            foreach (var series in DataSeriesCollection.ToList()) {
                 xxxx.Add(new List<TXDataPoint>() { x });
                 yyyy.Add(new List<TYDataPoint>() { y });
             }
@@ -581,8 +512,7 @@ namespace RealTimeGraphX
         /// </summary>
         /// <param name="xx">X data point collection.</param>
         /// <param name="yy">Y data point collection.</param>
-        public void PushData(IEnumerable<TXDataPoint> xx, IEnumerable<TYDataPoint> yy)
-        {
+        public void PushData(IEnumerable<TXDataPoint> xx, IEnumerable<TYDataPoint> yy) {
             if (DataSeriesCollection.Count == 0) return;
 
             var xList = xx.ToList();
@@ -591,23 +521,20 @@ namespace RealTimeGraphX
             List<List<TXDataPoint>> xxxx = new List<List<TXDataPoint>>();
             List<List<TYDataPoint>> yyyy = new List<List<TYDataPoint>>();
 
-            foreach (var series in DataSeriesCollection.ToList())
-            {
+            foreach (var series in DataSeriesCollection.ToList()) {
                 xxxx.Add(new List<TXDataPoint>());
                 yyyy.Add(new List<TYDataPoint>());
             }
 
             int counter = 0;
 
-            for (int i = 0; i < xList.Count; i++)
-            {
+            for (int i = 0; i < xList.Count; i++) {
                 xxxx[counter].Add(xList[i]);
                 yyyy[counter].Add(yList[i]);
 
                 counter++;
 
-                if (counter >= xxxx.Count)
-                {
+                if (counter >= xxxx.Count) {
                     counter = 0;
                 }
             }
@@ -620,8 +547,7 @@ namespace RealTimeGraphX
         /// </summary>
         /// <param name="xxxx">X matrix.</param>
         /// <param name="yyyy">Y matrix.</param>
-        public void PushData(IEnumerable<IEnumerable<TXDataPoint>> xxxx, IEnumerable<IEnumerable<TYDataPoint>> yyyy)
-        {
+        public void PushData(IEnumerable<IEnumerable<TXDataPoint>> xxxx, IEnumerable<IEnumerable<TYDataPoint>> yyyy) {
             if (DataSeriesCollection.Count == 0) return;
 
             IEnumerable<IEnumerable<GraphDataPoint>> xxxxI = xxxx.Select(x => x.ToList()).ToList();
@@ -636,23 +562,19 @@ namespace RealTimeGraphX
 
             bool is_data_valid = true;
 
-            for (int i = 0; i < xxxxList.Count; i++)
-            {
-                if (xxxxList[0].Count != first_count_x)
-                {
+            for (int i = 0; i < xxxxList.Count; i++) {
+                if (xxxxList[0].Count != first_count_x) {
                     is_data_valid = false;
                     break;
                 }
 
-                if (xxxxList[0].Count != yyyyList[0].Count)
-                {
+                if (xxxxList[0].Count != yyyyList[0].Count) {
                     is_data_valid = false;
                     break;
                 }
             }
 
-            if (!is_data_valid)
-            {
+            if (!is_data_valid) {
                 throw new ArgumentOutOfRangeException("When pushing data to a multi series renderer, each series must contain the same amount of data.");
             }
 
@@ -660,10 +582,8 @@ namespace RealTimeGraphX
 
             var pending_list = new List<PendingSeries>();
 
-            for (int i = 0; i < list.Count; i++)
-            {
-                pending_list.Add(new PendingSeries()
-                {
+            for (int i = 0; i < list.Count; i++) {
+                pending_list.Add(new PendingSeries() {
                     Series = list[i],
                     XX = xxxxList[i].ToList(),
                     YY = yyyyList[i].ToList(),
@@ -676,8 +596,7 @@ namespace RealTimeGraphX
         /// <summary>
         /// Clears all data points from this controller.
         /// </summary>
-        public void Clear()
-        {
+        public void Clear() {
             _clear = true;
 
             _pending_series_collection.BlockEnqueue(new List<PendingSeries>()
@@ -692,8 +611,7 @@ namespace RealTimeGraphX
         /// <summary>
         /// Requests the controller to invoke a virtual range change event.
         /// </summary>
-        public void RequestVirtualRangeChange()
-        {
+        public void RequestVirtualRangeChange() {
             OnVirtualRangeChanged(Range.MaximumX, Range.MaximumX, Range.MinimumY, Range.MaximumY);
         }
 
@@ -702,15 +620,11 @@ namespace RealTimeGraphX
         /// </summary>
         /// <param name="surfaceXPosition">The surface x position.</param>
         /// <returns></returns>
-        public IGraphDataPoint TranslateSurfaceX(double surfaceXPosition)
-        {
-            if (Surface != null)
-            {
+        public IGraphDataPoint TranslateSurfaceX(double surfaceXPosition) {
+            if (Surface != null) {
                 var relativeX = surfaceXPosition / Surface.GetSize().Width;
                 return GraphDataPointHelper.ComputeAbsolutePosition(VirtualMinimumX, VirtualMaximumX, relativeX);
-            }
-            else
-            {
+            } else {
                 return default(IGraphDataPoint);
             }
         }
@@ -720,15 +634,13 @@ namespace RealTimeGraphX
         /// </summary>
         /// <param name="surfaceYPosition">The surface y position.</param>
         /// <returns></returns>
-        public IGraphDataPoint TranslateSurfaceY(double surfaceYPosition)
-        {
-            if (Surface != null)
-            {
+        public IGraphDataPoint TranslateSurfaceY(double surfaceYPosition) {
+            if (VirtualMinimumY is null || VirtualMaximumX is null)
+                return default(IGraphDataPoint);
+            if (Surface != null) {
                 var relativeY = 1 - surfaceYPosition / Surface.GetSize().Height;
                 return GraphDataPointHelper.ComputeAbsolutePosition(VirtualMinimumY, VirtualMaximumY, relativeY);
-            }
-            else
-            {
+            } else {
                 return default(IGraphDataPoint);
             }
         }

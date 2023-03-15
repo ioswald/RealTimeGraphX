@@ -121,42 +121,42 @@
     <Style TargetType="local:UwpGraphGridLines">
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="local:UwpGraphGridLines">
+                <ControlTemplate TargetType="local:UwpGraphGridLines" x:Name="ParentRef">
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}">
-
                         <Grid>
                             <ItemsControl ItemsSource="{TemplateBinding HorizontalItems}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
-                                        <controls:UniformGrid Rows="1" Columns="{Binding RelativeSource={RelativeSource Mode=TemplatedParent},Path=Columns}"></controls:UniformGrid>
+                                        <controls:UniformGrid Rows="1" Columns="{Binding ElementName=ParentRef, Path=Columns}"/>
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Rectangle Fill="{Binding RelativeSource={RelativeSource Mode=TemplatedParent},Path=Foreground}" Width="1"  HorizontalAlignment="Left" VerticalAlignment="Stretch"></Rectangle>
+                                        <Rectangle Fill="{Binding RelativeSource={RelativeSource Mode=TemplatedParent}, Path=Foreground}"
+                                                   Width="1"  HorizontalAlignment="Left" VerticalAlignment="Stretch"/>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-
                             <ItemsControl ItemsSource="{TemplateBinding VerticalItems}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
-                                        <controls:UniformGrid Columns="1" Rows="{Binding RelativeSource={RelativeSource Mode=TemplatedParent},Path=Rows}"></controls:UniformGrid>
+                                        <controls:UniformGrid Columns="1" Rows="{Binding ElementName=ParentRef, Path=Rows}"/>
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Rectangle Fill="{Binding RelativeSource={RelativeSource Mode=TemplatedParent},Path=Foreground}" Height="1" HorizontalAlignment="Stretch" VerticalAlignment="Top"></Rectangle>
+                                        <Rectangle Fill="{Binding RelativeSource={RelativeSource Mode=TemplatedParent}, Path=Foreground}"
+                                                   Height="1" HorizontalAlignment="Stretch" VerticalAlignment="Top"/>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-
-                            <Rectangle Fill="{Binding RelativeSource={RelativeSource Mode=TemplatedParent},Path=Foreground}" Width="1"  HorizontalAlignment="Right" VerticalAlignment="Stretch"></Rectangle>
-                            <Rectangle Fill="{Binding RelativeSource={RelativeSource Mode=TemplatedParent},Path=Foreground}" Height="1" HorizontalAlignment="Stretch" VerticalAlignment="Bottom"></Rectangle>
+                            <Rectangle Fill="{Binding RelativeSource={RelativeSource Mode=TemplatedParent}, Path=Foreground}"
+                                       Width="1"  HorizontalAlignment="Right" VerticalAlignment="Stretch"/>
+                            <Rectangle Fill="{Binding RelativeSource={RelativeSource Mode=TemplatedParent}, Path=Foreground}"
+                                       Height="1" HorizontalAlignment="Stretch" VerticalAlignment="Bottom"/>
                         </Grid>
-
                     </Border>
                 </ControlTemplate>
             </Setter.Value>
